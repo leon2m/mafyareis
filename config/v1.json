@@ -1,0 +1,7 @@
+{
+  "interstitial_min_runs_before_first": 3,
+  "interstitial_every_n_runs": 2,
+  "interstitial_min_interval_sec": 120,
+  "interstitial_after_rewarded_cooldown_sec": 60,
+  "analytics_sample_rate": 1.0
+}
