@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meydan Okuma — Mafya Reis</title>
+<meta property="og:title" content="Mafya Reis — Meydan Okuma">
+<meta property="og:description" content="Bir aile seni meydana çağırdı. Kodu oyunda HARİTA › Meydan Okumalar'a yapıştır.">
+<style>
+:root { color-scheme: dark; }
+body { margin: 0; background: #080a10; color: #f3ebdd; font: 17px/1.6 -apple-system, "Segoe UI", sans-serif; text-align: center; }
+main { max-width: 560px; margin: 0 auto; padding: 40px 16px 56px; }
+h1 { color: #f5d892; font-size: 28px; margin: 0 0 6px; letter-spacing: 1px; }
+p { color: #bdb5a6; margin: 10px 0; }
+a { color: #d8a64c; }
+.card { margin: 24px 0; padding: 22px 18px; border: 2px solid #d8a64c; border-radius: 16px; background: linear-gradient(#21180c, #120d07); }
+.eyebrow { color: #d8a64c; font-size: 13px; letter-spacing: 3px; font-weight: 700; }
+.name { color: #f5d892; font-size: 30px; font-weight: 800; margin: 6px 0; }
+.stats { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.stat { padding: 8px 12px; border: 1px solid #3d495e; border-radius: 10px; background: #0d1119; min-width: 92px; }
+.stat b { display: block; color: #f3ebdd; font-size: 22px; }
+.stat span { color: #818a99; font-size: 12px; letter-spacing: 1px; }
+code { display: block; margin: 16px auto 8px; padding: 12px; font-size: 20px; letter-spacing: 2px; color: #f5d892; background: #0a0d14; border: 1px dashed #d8a64c; border-radius: 10px; word-break: break-all; }
+.open { display: inline-block; margin: 6px 0 4px; padding: 12px 22px; font-weight: 800; color: #fff3e0; background: #a8323e; border-radius: 12px; text-decoration: none; }
+button { padding: 12px 22px; font-size: 16px; font-weight: 700; color: #2a1805; background: #f6d27a; border: 0; border-radius: 12px; cursor: pointer; }
+.bad { border-color: #a8323e; }
+small { color: #818a99; }
+</style>
+</head>
+<body>
+<main>
+<h1>MEYDAN OKUMA</h1>
+<p id="lead">Bir aile seni meydana çağırdı.</p>
+<div class="card" id="card" hidden>
+  <div class="eyebrow" id="district"></div>
+  <div class="name" id="name"></div>
+  <div class="stats">
+    <div class="stat"><b id="attack"></b><span>GÜÇ</span></div>
+    <div class="stat"><b id="defense"></b><span>SAVUNMA</span></div>
+    <div class="stat"><b id="hq"></b><span>KARARGÂH</span></div>
+  </div>
+  <code id="code"></code>
+  <p><a id="open" class="open" href="#">OYUNDA AÇ</a></p>
+  <button id="copy" type="button">KODU KOPYALA</button>
+</div>
+<div class="card bad" id="error" hidden><p>Bu kod okunamadı. Bağlantıyı eksiksiz açtığından emin ol.</p></div>
+<p>Oyunda <b>HARİTA › Meydan Okumalar</b> bölümüne kodu yapıştır; aile senin meydanında belirir.</p>
+<p>App Store'da yakında. TestFlight daveti için: <a href="mailto:info@musaitim.app">info@musaitim.app</a></p>
+<p><a href="../">Ana sayfa</a> · <a href="../gizlilik.html">Gizlilik</a></p>
+<p><small>Kodlar yalnız oyundaki takma ad ve sayıları taşır; kişisel veri içermez. Tüm karakterler kurgusaldır.</small></p>
+</main>
+<script>
+// Oyundaki ChallengeCode ile aynı biçim: Crockford base32, alanlar ve 12 bitlik sağlama.
+const ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+const FIELDS = [["version",3],["player",20],["hero",2],["district",3],["nickname",6],["hq",4],["tier",2],["attack",14],["defense",14]];
+const HEROES = ["Mahir Yelkovan", "Aydın Karaca", "Baran Sarp", "Nehir Vardar"];
+const DISTRICTS = ["Kadıköy", "Beyoğlu", "Fatih", "Üsküdar", "Beşiktaş", "Şişli"];
+const NICKNAMES = ["Yeni Yetme", "Pazar Kurdu", "Kâtip", "Kepenk Ustası", "Rıhtım Bekçisi", "Sessiz Ortak", "Gece Kuşu", "Söz Ehli", "Yol Kurucu", "Kapı Bekçisi", "Tespihçi", "Usta Pazarlıkçı", "Mimar", "Meydan Ehli", "Hemşehri", "Defter Sahibi"];
+function normalize(text) {
+  const upper = text.toUpperCase().replace(/O/g, "0").replace(/[IL\u0130]/g, "1").replace(/\u015E/g, "S");
+  let out = "";
+  for (const ch of upper) if (ALPHABET.includes(ch)) out += ch;
+  return out;
+}
+function checksum(bits, width) {
+  let h = 17;
+  for (let i = 0; i < bits.length; i++) h = (h * 31 + bits[i] * (i % 11 + 3) + 5) % 1000003;
+  return h % (1 << width);
+}
+function read(bits, start, width) { let v = 0; for (let i = 0; i < width; i++) v = v * 2 + bits[start + i]; return v; }
+function decode(text) {
+  let plain = normalize(text);
+  if (plain.length === 18 && plain.startsWith("MR")) plain = plain.slice(2);
+  if (plain.length !== 16) return null;
+  const bits = [];
+  for (const ch of plain) { const n = ALPHABET.indexOf(ch); for (let i = 4; i >= 0; i--) bits.push((n >> i) & 1); }
+  const dataBits = FIELDS.reduce((sum, f) => sum + f[1], 0);
+  if (read(bits, dataBits, 12) !== checksum(bits.slice(0, dataBits), 12)) return null;
+  const out = {}; let at = 0;
+  for (const [name, width] of FIELDS) { out[name] = read(bits, at, width); at += width; }
+  if (out.version !== 1 || out.player <= 0 || out.hero >= HEROES.length || out.district >= DISTRICTS.length || out.hq < 1 || out.hq > 10) return null;
+  out.code = "MR-" + plain.match(/.{1,4}/g).join("-");
+  return out;
+}
+const params = new URLSearchParams(location.search);
+const raw = params.get("k") || "";
+const data = raw ? decode(raw) : null;
+if (data) {
+  document.getElementById("card").hidden = false;
+  document.getElementById("district").textContent = DISTRICTS[data.district].toLocaleUpperCase("tr") + " · ARKADAŞ AİLESİ";
+  document.getElementById("name").textContent = (NICKNAMES[data.nickname] || "") + " " + HEROES[data.hero].split(" ")[0];
+  document.getElementById("attack").textContent = data.attack;
+  document.getElementById("defense").textContent = data.defense;
+  document.getElementById("hq").textContent = "Sv " + data.hq;
+  document.getElementById("code").textContent = data.code;
+  document.getElementById("lead").textContent = DISTRICTS[data.district] + "'den bir aile seni meydana çağırdı. Kafa tutabilir misin?";
+  document.getElementById("open").href = "mafyareis://meydan?k=" + encodeURIComponent(data.code);
+  document.getElementById("copy").onclick = () => navigator.clipboard && navigator.clipboard.writeText(data.code).then(() => { document.getElementById("copy").textContent = "KOPYALANDI"; });
+} else if (raw) {
+  document.getElementById("error").hidden = false;
+}
+</script>
+</body>
+</html>
